@@ -4,10 +4,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/a8m/tree"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/wallentx/tree"
 	"os"
 )
 
@@ -110,35 +110,29 @@ func main() {
 
 	// svc := s3.New(session.New(&aws.Config{Region: region}))
 	spin := NewSpin()
-
-	fs = NewFs()
-	pageNum := 0
-	err := client.ListObjectsPages(params,
-		func(page *ListObjectsOutput, lastPage bool) bool {
-			pageNum++
-
-			// Loop over s3 object
-			for _, obj := range page.Contents {
-				key := *obj.Key
-				if noPrefix {
-					key = fmt.Sprintf("%s/%s", *bucket, key)
-				}
-				fs.addFile(key, obj)
-			}
-			return pageNum <= 3
-		})
+	resp, err := svc.ListObjects(&s3.ListObjectsInput{
+		Bucket: bucket,
+		Prefix: prefix,
+	})
+	spin.Done()
+	var fs = NewFs()
 	if err != nil {
 		errAndExit(err)
+	} else {
+		// Loop over s3 object
+		for _, obj := range resp.Contents {
+			key := *obj.Key
+			if noPrefix {
+				key = fmt.Sprintf("%s/%s", *bucket, key)
+			}
+			fs.addFile(key, obj)
+		}
 	}
-
-	spin.Done()
-
 	var nd, nf int
 	rootDir := *prefix
 	if noPrefix {
 		rootDir = *bucket
 	}
-
 	// Output file
 	var outFile = os.Stdout
 	if *o != "" {
@@ -175,7 +169,6 @@ func main() {
 		nd, nf = nd+d-1, nf+f
 	}
 	inf.Print(opts)
-
 	// print footer
 	footer := fmt.Sprintf("\n%d directories", nd)
 	if !opts.DirsOnly {
