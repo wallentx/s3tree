@@ -12,30 +12,51 @@ import (
 )
 
 var (
-	o          = flag.String("o", "", "")            // Output to file
-	a          = flag.Bool("a", false, "")           // All files
-	d          = flag.Bool("d", false, "")           // Dirs only
-	f          = flag.Bool("f", false, "")           // Full path
-	s          = flag.Bool("s", false, "")           // Show byte size
-	h          = flag.Bool("h", false, "")           // Show SI size
-	Q          = flag.Bool("Q", false, "")           // Quote filename
-	D          = flag.Bool("D", false, "")           // Show last mod
-	C          = flag.Bool("C", false, "")           // Colorize
-	L          = flag.Int("L", 0, "")                // Deep level
-	U          = flag.Bool("U", false, "")           // No sort
-	v          = flag.Bool("v", false, "")           // Version sort
-	t          = flag.Bool("t", false, "")           // Last modification sort
-	r          = flag.Bool("r", false, "")           // Reverse sort
-	P          = flag.String("P", "", "")            // Matching pattern
-	I          = flag.String("I", "", "")            // Ignoring pattern
-	ignorecase = flag.Bool("ignore-case", false, "") // Ignore case-senstive
-	dirsfirst  = flag.Bool("dirsfirst", false, "")   // Dirs first sort
-	sort       = flag.String("sort", "", "")         // Sort by name or size
+	// o : Output to file
+	o = flag.String("o", "", "")
+	// a : All files
+	a = flag.Bool("a", false, "")
+	// d : Dirs only
+	d = flag.Bool("d", false, "")
+	// f : Full path
+	f = flag.Bool("f", false, "")
+	// s : Show byte size
+	s = flag.Bool("s", false, "")
+	// h : Show SI size
+	h = flag.Bool("h", false, "")
+	// Q : Quote filename
+	Q = flag.Bool("Q", false, "")
+	// D : Show last mod
+	D = flag.Bool("D", false, "")
+	// C : Colorize
+	C = flag.Bool("C", false, "")
+	// L : Deep level
+	L = flag.Int("L", 0, "")
+	// U : No sort
+	U = flag.Bool("U", false, "")
+	// v : Version sort
+	v = flag.Bool("v", false, "")
+	// t : Last modification sort
+	t = flag.Bool("t", false, "")
+	// r : Reverse sort
+	r = flag.Bool("r", false, "")
+	// P : Matching pattern
+	P = flag.String("P", "", "")
+	// I : Ignoring pattern
+	I = flag.String("I", "", "")
+	// ignorecase : Ignore case-senstive
+	ignorecase = flag.Bool("ignore-case", false, "")
+	// dirsfirst : Dirs first sort
+	dirsfirst = flag.Bool("dirsfirst", false, "")
+	// sort : Sort by name or size
+	sort = flag.String("sort", "", "")
+
 	// S3 args
 	bucket = flag.String("b", "", "")
 	prefix = flag.String("p", "", "")
 	region = flag.String("region", "us-east-1", "")
-	profile = flag.String("profile", "", "")
+
+	// profile = aws.String("profile")
 )
 
 var usage = `Usage: s3tree -b bucket-name -p prefix(optional) [options...]
@@ -76,14 +97,17 @@ func main() {
 	flag.Parse()
 	var noPrefix = len(*prefix) == 0
 	if len(*bucket) == 0 {
-		err := errors.New("-b(s3 bucket) is required.")
+		err := errors.New("-b(s3 bucket) is required")
 		errAndExit(err)
 	}
+
+	// var profile = aws.String(profile)
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{Region: region},
-		Profile: profile,
+		Config:  aws.Config{Region: region},
+		Profile: "tokenauth",
 	}))
 	svc := s3.New(sess)
+
 	// svc := s3.New(session.New(&aws.Config{Region: region}))
 	spin := NewSpin()
 
@@ -91,17 +115,18 @@ func main() {
 	pageNum := 0
 	err := client.ListObjectsPages(params,
 		func(page *ListObjectsOutput, lastPage bool) bool {
-		pageNum++
-		// Loop over s3 object
-		for _, obj := range page.Contents {
-			key := *obj.Key
-			if noPrefix {
-				key = fmt.Sprintf("%s/%s", *bucket, key)
+			pageNum++
+
+			// Loop over s3 object
+			for _, obj := range page.Contents {
+				key := *obj.Key
+				if noPrefix {
+					key = fmt.Sprintf("%s/%s", *bucket, key)
+				}
+				fs.addFile(key, obj)
 			}
-			fs.addFile(key, obj)
-		}
-		return pageNum <= 3
-	})
+			return pageNum <= 3
+		})
 	if err != nil {
 		errAndExit(err)
 	}
@@ -113,6 +138,7 @@ func main() {
 	if noPrefix {
 		rootDir = *bucket
 	}
+
 	// Output file
 	var outFile = os.Stdout
 	if *o != "" {
@@ -149,6 +175,7 @@ func main() {
 		nd, nf = nd+d-1, nf+f
 	}
 	inf.Print(opts)
+
 	// print footer
 	footer := fmt.Sprintf("\n%d directories", nd)
 	if !opts.DirsOnly {
