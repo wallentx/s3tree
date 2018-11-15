@@ -35,6 +35,7 @@ var (
 	bucket = flag.String("b", "", "")
 	prefix = flag.String("p", "", "")
 	region = flag.String("region", "us-east-1", "")
+	profile = flag.String("profile", "", "")
 )
 
 var usage = `Usage: s3tree -b bucket-name -p prefix(optional) [options...]
@@ -78,7 +79,12 @@ func main() {
 		err := errors.New("-b(s3 bucket) is required.")
 		errAndExit(err)
 	}
-	svc := s3.New(session.New(&aws.Config{Region: region}))
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		Config: aws.Config{Region: region},
+		Profile: profile,
+	}))
+	svc := s3.New(sess)
+	// svc := s3.New(session.New(&aws.Config{Region: region}))
 	spin := NewSpin()
 
 	fs = NewFs()
