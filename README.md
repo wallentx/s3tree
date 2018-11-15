@@ -4,12 +4,12 @@ s3tree
 
 ### Installation:
 ```sh
-$ go get github.com/a8m/s3tree
+$ go get github.com/wallentx/s3tree
 ```
 
 ### How to use ?
 ```sh
-$ s3tree -b bucket-name -p prefix(optional) [options...]
+$ s3tree -b bucket-name -p prefix(optional) -region region -profile IAM_Profile(optional) [options...]
 ```
 Remember, your credentials should located at `~/.aws/credentials` or as an environment variables: 
 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
