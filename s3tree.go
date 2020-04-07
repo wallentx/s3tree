@@ -50,22 +50,21 @@ var (
 	dirsfirst = flag.Bool("dirsfirst", false, "")
 	// sort : Sort by name or size
 	sort = flag.String("sort", "", "")
-
 	// S3 args
 	bucket = flag.String("b", "", "")
 	prefix = flag.String("p", "", "")
 	region = flag.String("region", "us-east-1", "")
-
-	// profile = aws.String("profile")
+	profile = flag.String("profile", "tokenauth", "")
 )
 
-var usage = `Usage: s3tree -b bucket-name -p prefix(optional) [options...]
+var usage = `Usage: s3tree -b bucket-name -p prefix(optional) -region region -profile IAM_Profile(optional) [options...]
 
 Options:
     --------- S3 options ----------
     -b		    s3 bucket(required).
     -p		    s3 prefix.
     --region name   aws region(default to us-east-1).
+		--profile
     ------- Listing options -------
     -a		    All files are listed.
     -d		    List directories only.
@@ -95,20 +94,17 @@ Options:
 func main() {
 	flag.Usage = func() { fmt.Fprint(os.Stderr, usage) }
 	flag.Parse()
-	var noPrefix = len(*prefix) == 0
 	if len(*bucket) == 0 {
 		err := errors.New("-b(s3 bucket) is required")
 		errAndExit(err)
 	}
 
-	// var profile = aws.String(profile)
+	var noPrefix = len(*prefix) == 0
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		Config:  aws.Config{Region: region},
-		Profile: "tokenauth",
+		Profile: *profile,
 	}))
 	svc := s3.New(sess)
-
-	// svc := s3.New(session.New(&aws.Config{Region: region}))
 	spin := NewSpin()
 	resp, err := svc.ListObjects(&s3.ListObjectsInput{
 		Bucket: bucket,
