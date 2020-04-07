@@ -64,7 +64,7 @@ Options:
     -b		    s3 bucket(required).
     -p		    s3 prefix.
     --region name   aws region(default to us-east-1).
-		--profile
+	--profile 	AWS IAM Profile
     ------- Listing options -------
     -a		    All files are listed.
     -d		    List directories only.
